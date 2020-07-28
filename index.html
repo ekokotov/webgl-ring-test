@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My first three.js app</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r118/three.min.js"></script>
+
+<script src="https://res.cloudinary.com/aoedipus/raw/upload/js/inflate.min.js"></script>
+<!--<script src="https://threejs.org/examples/js/loaders/FBXLoader.js"></script>-->
+<!--<script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>-->
+<script src="./JDLoader.min.js"></script>
+
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script>
+<!--    -->
+//    var scene = new THREE.Scene();
+//    scene.background = new THREE.Color( 0xcccccc );
+//    // scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+//    var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
+//    var renderer = new THREE.WebGLRenderer();
+//    renderer.setSize( window.innerWidth, window.innerHeight );
+//    renderer.shadowMap.enabled = true;
+//    document.body.appendChild( renderer.domElement );
+//
+//    var controls = new THREE.OrbitControls( camera, renderer.domElement );
+//    controls.target.set(0, 300, 0);
+//    controls.update();
+//
+//
+//    // lighting
+//    // https://threejs.org/docs/#api/en/lights/HemisphereLight
+//    light = new THREE.HemisphereLight(0xffffff, 0x444444, 1); // colors, intensity
+//    light.position.set(0, 200, 0);
+//    scene.add(light);
+//
+//    // https://threejs.org/docs/#api/en/lights/DirectionalLight
+//    light = new THREE.DirectionalLight(0xffffbb, 0.5); // color, intensity
+//    light.position.set(0, 50, 100);
+//    scene.add(light);
+//
+//    light = new THREE.DirectionalLight(0xffffaa, 0.25); // color, intensity
+//    light.position.set(0, 50, -100);
+//    scene.add(light);
+//
+//
+//    var loader = new THREE.FBXLoader();
+//
+//
+//    // scene.add( cube );
+//    camera.position.z = 5;
+//    var material2 = new THREE.MeshPhongMaterial();
+//    loader.load('./Ring_quad.fbx', function(object) {
+//        console.log(object);
+//        // object.position.set(0, 0, 0); // set model position
+//        // object.rotation.set(-0.2, 0, 0); // set model position
+//        // object.scale.set(1, 1, 1); // set model scale
+//
+//        object.traverse(function(child) {
+//            if (child.isMesh) {
+//                // child.material = material2;
+//                child.material.reflectivity = 0.1; // def 1
+//                child.material.shininess = 10; // def 30
+//                child.material.specular = {r: 0.1, g: 0.01, b: 0.01}; // def 0.25 rgb
+//                child.castShadow = true;
+//                child.receiveShadow = true;
+//                // child.material.skinning = true;
+//            }
+//        });
+//
+//
+//        camera.position.sub(object.position).setLength(1000).add(object.position);
+//        scene.add(object);
+//    }, (ev) => {
+//        console.log(ev);
+//    }, (e) => {
+//        console.log(e);
+//    });
+//
+//
+//    var animate = function () {
+//        requestAnimationFrame( animate );
+//
+//
+//        controls.update();
+//        renderer.render( scene, camera );
+//    };
+//
+//    animate();
+
+
+var meshes = [], mixers = [], hemisphereLight, pointLight, camera, scene, renderer, controls;
+// var clock = new THREE.Clock;
+
+init();
+animate();
+
+function init()
+{
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    scene = new THREE.Scene();
+    scene.add(new THREE.AmbientLight(0x161616, 1));
+    scene.background = new THREE.Color( 0xcccccc );
+
+    var light = new THREE.HemisphereLight(0xffffaa, 0x444444, .5); // colors, intensity
+    light.position.set(0, 200, 0);
+    scene.add(light);
+
+    light = new THREE.DirectionalLight(0xffffbb, 1); // color, intensity
+    scene.add(light);
+
+    // light = new THREE.DirectionalLight(0xffffaa, 0.3, 1); // color, intensity
+    // var helper = new THREE.DirectionalLightHelper( light, 5 );
+    // light.position.set(0, 1000, 50);
+    // scene.add(helper);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    var loader = new THREE.JDLoader();
+    // var textureLoaded = new THREE.TextureLoader().load('./R/Ring_Base_Color.jpg');
+    // var textureLoaded = new THREE.TextureLoader().load('./R/Ring_Roughness.jpg');
+    var alphaTexture = new THREE.TextureLoader().load('./Ring_Opacity.jpg');
+    alphaTexture.wrapT = THREE.RepeatWrapping
+    alphaTexture.wrapS = THREE.RepeatWrapping
+    var colorTexture = new THREE.TextureLoader().load('./Ring_Base_Color.jpg');
+// var metal = material = new THREE.MeshStandardMaterial( {
+//
+//     color: 0xffffff,
+//     emissive: 0x0,
+//
+//     roughness: 0.5,
+//     metalness: 1,
+//
+//     // roughnessMap: roughnessMap,
+//     // metalnessMap: metalnessMap,
+//
+//     // envMap: envMap, // important -- especially for metals!
+//     // envMapIntensity: envMapIntensity
+//
+// });
+    loader.load("./1_V.jd",
+        function (data)
+        {
+            for (var i = 0; i < data.objects.length; ++i)
+            {
+                var obj = data.createObject(i);
+                obj.traverse(function(child) {
+                    // debugger
+                    if (child.isMesh) {
+                        child.material[0].envMap = alphaTexture
+                        // child.material[0].specular = 0x2194ce
+                        // child.material[0].color = 0xffffff
+                        // child.material[0].map = null
+                        // child.material[0].wireframe = true
+                        // child.material[0].wireframe = true
+                        // child.material[0] = metal
+                        // child.material[0].metal =true
+                        // child.material[0].roughness = 1; // def 1
+                        child.material[0].reflectivity = 0.05; // def 1
+                        // child.material[0].shininess = 30; // def 30
+                        // child.material[0].specular = {r: 0.1, g: 0.01, b: 0.01}; // def 0.25 rgb
+                        // child.material[0].type = THREE.MeshStandardMaterial
+                        // child.material[0].map = textureLoaded;
+                        // child.castShadow = true;
+                        // child.receiveShadow = true;
+                        child.needsUpdate = true;
+                        child.material[0].needsUpdate = true;
+                    }
+                })
+
+                scene.add(obj);
+                // if (obj.geometry.animations)
+                // {
+                //     var mixer = new THREE.AnimationMixer(obj);
+                //     mixers.push(mixer);
+                //     var action = mixer.clipAction( obj.geometry.animations[0] );
+                //     action.play();
+                // }
+                light.target = obj;
+                scene.add(light);
+            }
+            var near = 1, far = 100 * data.boundingSphere.radius;
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
+            camera.position.z = data.boundingSphere.center.z + 2.5 * data.boundingSphere.radius;
+            camera.lookAt(data.boundingSphere.center);
+            // camera.add(new THREE.DirectionalLight(0xFFFFFF, 1));
+            camera.position.sub(data.boundingSphere.center).setLength(1000).add(data.boundingSphere.center);
+            scene.add(camera);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.copy(data.boundingSphere.center);
+        });
+
+}
+
+function animate()
+{
+    if (controls) controls.update();
+
+    if (camera)  renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+}
+
+function onWindowResize()
+{
+    if (camera)
+    {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+</script>
+</body>
+</html>
