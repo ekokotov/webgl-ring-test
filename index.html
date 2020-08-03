@@ -129,10 +129,14 @@ function init()
     var loader = new THREE.JDLoader();
     // var textureLoaded = new THREE.TextureLoader().load('./R/Ring_Base_Color.jpg');
     // var textureLoaded = new THREE.TextureLoader().load('./R/Ring_Roughness.jpg');
-    var alphaTexture = new THREE.TextureLoader().load('./Ring_Opacity.jpg');
-    alphaTexture.wrapT = THREE.RepeatWrapping
-    alphaTexture.wrapS = THREE.RepeatWrapping
-    var colorTexture = new THREE.TextureLoader().load('./Ring_Base_Color.jpg');
+    var normalMap  = new THREE.TextureLoader().load('./Sphere_Normal_DirectX.jpg');
+    var roughnessMap = new THREE.TextureLoader().load('./Sphere_Roughness.jpg');
+    roughnessMap.magFilter = THREE.NearestFilter;
+    roughnessMap.wrapS = THREE.RepeatWrapping;
+    roughnessMap.wrapT = THREE.RepeatWrapping;
+
+    // var alphaTexture = new THREE.TextureLoader().load('./Ring_Opacity.jpg');
+    var colorTexture = new THREE.TextureLoader().load('./Sphere_Base_Color.jpg');
 // var metal = material = new THREE.MeshStandardMaterial( {
 //
 //     color: 0xffffff,
@@ -148,16 +152,23 @@ function init()
 //     // envMapIntensity: envMapIntensity
 //
 // });
-    loader.load("./1_V.jd",
+    loader.load("./Sp_standart.jd",
         function (data)
         {
             for (var i = 0; i < data.objects.length; ++i)
             {
                 var obj = data.createObject(i);
                 obj.traverse(function(child) {
-                    // debugger
                     if (child.isMesh) {
-                        child.material[0].envMap = alphaTexture
+                        // child.material[0] = new THREE.MeshStandardMaterial({ // MeshPhongMaterial
+                        //     map:colorTexture,
+                        //     roughnessMap: roughnessMap,
+                        //     // roughness: 0.1,
+                        //     normalMap : normalMap
+                        // })
+                        child.material[0].roughnessMap = roughnessMap
+                        // child.material[0].roughnessMap = roughnessMap
+                        child.material[0].normalMap = normalMap
                         // child.material[0].specular = 0x2194ce
                         // child.material[0].color = 0xffffff
                         // child.material[0].map = null
@@ -166,15 +177,15 @@ function init()
                         // child.material[0] = metal
                         // child.material[0].metal =true
                         // child.material[0].roughness = 1; // def 1
-                        child.material[0].reflectivity = 0.05; // def 1
+                        // child.material[0].reflectivity = 0.05; // def 1
                         // child.material[0].shininess = 30; // def 30
                         // child.material[0].specular = {r: 0.1, g: 0.01, b: 0.01}; // def 0.25 rgb
                         // child.material[0].type = THREE.MeshStandardMaterial
                         // child.material[0].map = textureLoaded;
                         // child.castShadow = true;
                         // child.receiveShadow = true;
-                        child.needsUpdate = true;
-                        child.material[0].needsUpdate = true;
+                        // child.needsUpdate = true;
+                        // child.material[0].needsUpdate = true;
                     }
                 })
 
